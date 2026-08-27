@@ -34,8 +34,10 @@ body {
   color: var(--color-cream);
 }
 
-input, textarea {
-  caret-color: var(--color-pine);
+@layer base {
+  input, textarea {
+    caret-color: var(--color-pine);
+  }
 }
 
 .scroll-area {

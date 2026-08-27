@@ -20,10 +20,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="pointer-events-none absolute inset-0">
           <Grainient color1="#35705B" color2="#1F4D3F" color3="#16382E" timeSpeed={0.6} grainAmount={0.08} />
         </div>
-        <nav className="relative z-20 flex items-center justify-between px-5 py-3 bg-gradient-to-b from-pine-deep/95 via-pine-deep/75 to-pine-deep/20">
+        <nav className="relative z-20 flex items-center justify-between px-5 py-3 sm:px-8 sm:py-5 bg-gradient-to-b from-pine-deep/95 via-pine-deep/75 to-pine-deep/20">
           <Link href="/" className="flex items-center gap-2.5 focus-visible:outline-2 focus-visible:outline-cream">
-            <Plant weight="fill" size={20} color="#F2F0EA" />
-            <span className="font-display text-base sm:text-xl font-semibold text-cream">Fern Hollow Early Learning</span>
+            <Plant weight="fill" size={20} color="#F2F0EA" className="sm:size-6" />
+            <span className="font-display text-base sm:text-2xl font-semibold text-cream">Fern Hollow Early Learning</span>
           </Link>
           <div className="flex gap-4 text-sm font-semibold">
             <Link href="/" className="text-cream/70 hover:text-cream focus-visible:outline-2 focus-visible:outline-cream">Parent</Link>
