@@ -1,13 +1,13 @@
 import {
   streamText, convertToModelMessages, toUIMessageStream,
-  createUIMessageStreamResponse, tool, isStepCount, smoothStream, type UIMessage,
+  createUIMessageStreamResponse, tool, smoothStream, type UIMessage,
 } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { getPolicies, logQuestion } from "@/lib/store";
 import { buildSystemPrompt } from "@/lib/prompt";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 function lastUserText(messages: UIMessage[]): string {
   const last = [...messages].reverse().find((m) => m.role === "user");
@@ -19,22 +19,19 @@ export async function POST(req: Request) {
   const policies = await getPolicies();
 
   const result = streamText({
-    model: anthropic("claude-sonnet-5"),
+    model: anthropic("claude-opus-5"),
     instructions: buildSystemPrompt(policies),
-    messages: await convertToModelMessages(messages),
+    messages: await convertToModelMessages(messages, { ignoreIncompleteToolCalls: true }),
     tools: {
       cite: tool({
-        description: "Report which policy ids grounded your answer. Call after every answer. Empty array if none applied.",
+        description: "Report which policy ids grounded your answer. Call exactly once, at the very end of your reply, after your complete answer text. Empty array if no policy applied.",
         inputSchema: z.object({ policyIds: z.array(z.string()) }),
-        execute: async ({ policyIds }) => ({ ok: true, policyIds }),
       }),
       escalate: tool({
-        description: "Flag a sensitive question for human staff instead of answering it. reason is a short category like medical, custody, staff-privacy, other-child, safety, billing-dispute.",
+        description: "Flag a sensitive question for human staff. Call together with cite at the very end of your reply when the topic is sensitive. reason is a short category like medical, custody, staff-privacy, other-child, safety, billing-dispute.",
         inputSchema: z.object({ reason: z.string(), note: z.string() }),
-        execute: async ({ reason, note }) => ({ ok: true, reason, note }),
       }),
     },
-    stopWhen: isStepCount(3),
     experimental_transform: smoothStream({ delayInMs: 10, chunking: "word" }),
     onEnd: async ({ text, steps }) => {
       const allToolCalls = steps.flatMap((s) => s.toolCalls ?? []);
