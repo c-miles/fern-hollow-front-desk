@@ -18,8 +18,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <nav className="flex items-center justify-between px-5 py-3 bg-pine-deep">
           <span className="font-display text-lg font-semibold text-cream">Fern Hollow Early Learning</span>
           <div className="flex gap-4 text-sm font-semibold">
-            <Link href="/" className="text-cream/70 hover:text-cream">Parent</Link>
-            <Link href="/staff" className="text-cream/70 hover:text-cream">Staff</Link>
+            <Link href="/" className="text-cream/70 hover:text-cream focus-visible:outline-2 focus-visible:outline-cream">Parent</Link>
+            <Link href="/staff" className="text-cream/70 hover:text-cream focus-visible:outline-2 focus-visible:outline-cream">Staff</Link>
           </div>
         </nav>
         {children}

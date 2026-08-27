@@ -24,7 +24,7 @@ export function PolicyEditor({ initial }: { initial: Policy[] }) {
       {policies.map((p) => (
         <div key={p.id} className="bg-surface border border-line rounded-[10px]">
           <button onClick={() => setOpenId(openId === p.id ? null : p.id)}
-            className="w-full text-left px-4 py-3 font-semibold text-[15px] text-ink">
+            className="w-full text-left px-4 py-3 font-semibold text-[15px] text-ink focus-visible:outline-2 focus-visible:outline-pine">
             {p.title}
           </button>
           {openId === p.id && (
@@ -35,7 +35,7 @@ export function PolicyEditor({ initial }: { initial: Policy[] }) {
                 className="w-full text-sm p-3 bg-paper border border-line rounded-lg outline-none focus:border-pine"
               />
               <button onClick={() => save(policies)} disabled={saving}
-                className="px-3.5 py-2 text-sm font-semibold rounded-lg bg-pine text-cream disabled:opacity-50">
+                className="px-3.5 py-2 text-sm font-semibold rounded-lg bg-pine text-cream disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-pine">
                 {saving ? "Saving…" : "Save changes"}
               </button>
             </div>
@@ -57,12 +57,12 @@ export function PolicyEditor({ initial }: { initial: Policy[] }) {
               setAdding(false);
             }}
             disabled={saving}
-            className="px-3.5 py-2 text-sm font-semibold rounded-lg bg-pine text-cream disabled:opacity-50">
+            className="px-3.5 py-2 text-sm font-semibold rounded-lg bg-pine text-cream disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-pine">
             Add policy
           </button>
         </div>
       ) : (
-        <button onClick={() => setAdding(true)} className="text-sm font-semibold text-pine underline">
+        <button onClick={() => setAdding(true)} className="text-sm font-semibold text-pine underline focus-visible:outline-2 focus-visible:outline-pine">
           Add a policy
         </button>
       )}
