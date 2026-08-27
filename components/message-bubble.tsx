@@ -52,7 +52,7 @@ export function MessageBubble({ message, policies }: { message: UIMessage; polic
           }
           if (part.type === "tool-escalate" && (part.state === "input-available" || part.state === "output-available")) {
             return (
-              <div key={i} className="rounded-[10px] bg-paper px-3 py-2.5 text-sm [text-shadow:none] shadow-[0_1px_2px_rgba(0,0,0,0.12),0_8px_16px_rgba(0,0,0,0.16),0_24px_48px_rgba(0,0,0,0.18)]">
+              <div key={i} className="rounded-[10px] border border-terracotta/20 bg-paper px-3 py-2.5 text-sm [text-shadow:none] shadow-[0_1px_2px_rgba(0,0,0,0.12),0_8px_16px_rgba(0,0,0,0.16),0_24px_48px_rgba(0,0,0,0.18)]">
                 <span className="inline-flex items-center rounded-full bg-terracotta-soft px-2.5 py-0.5 text-xs font-semibold text-terracotta">Flagged for the front desk</span>
                 <p className="text-ink-soft text-xs mt-2">
                   A staff member will follow up. If it is urgent, call <a className="underline" href="tel:5550142400">(555) 014-2400</a>.
