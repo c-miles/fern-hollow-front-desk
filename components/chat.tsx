@@ -93,6 +93,12 @@ export function Chat({ policies }: { policies: Policy[] }) {
             ref={inputRef}
             rows={1}
             value={input}
+            autoComplete="off"
+            autoCorrect="on"
+            autoCapitalize="sentences"
+            spellCheck={true}
+            enterKeyHint="send"
+            inputMode="text"
             onChange={(e) => { setInput(e.target.value); growTextarea(e.target); }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
