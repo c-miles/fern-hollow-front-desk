@@ -2,8 +2,10 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useState, useRef, useEffect } from "react";
-import { Plant, ArrowUp, Stop } from "@phosphor-icons/react";
+import { Plant, ArrowUp, Stop, Microphone } from "@phosphor-icons/react";
 import { MessageBubble } from "./message-bubble";
+import { VoiceWaveform } from "./voice-waveform";
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import type { Policy } from "@/lib/types";
 
 // Kept for later use; not currently rendered.
@@ -14,11 +16,23 @@ const CHIPS = [
 ];
 const PHONE_NUMBER = "(555) 014-2400";
 
+const MAX_TEXTAREA_HEIGHT = 120;
+
+function growTextarea(el: HTMLTextAreaElement | null) {
+  if (!el) return;
+  el.style.height = "auto";
+  el.style.height = `${Math.min(el.scrollHeight, MAX_TEXTAREA_HEIGHT)}px`;
+}
+
 export function Chat({ policies }: { policies: Policy[] }) {
   const [input, setInput] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const pinnedRef = useRef(true);
+  const preVoiceTextRef = useRef("");
+  const wasListeningRef = useRef(false);
+  const suppressSubmitRef = useRef(false);
+  const voice = useSpeechRecognition();
   const { messages, sendMessage, status, regenerate, stop } = useChat({
     transport: new DefaultChatTransport({ api: "/api/chat" }),
     throttle: 50,
@@ -31,38 +45,113 @@ export function Chat({ policies }: { policies: Policy[] }) {
     }
   }, [messages, status]);
 
+  // Reflect the live transcript into the input while recording, prepending
+  // any text that was already there once (guarded so it never re-prepends).
+  useEffect(() => {
+    if (!voice.listening) return;
+    const merged = preVoiceTextRef.current + voice.transcript;
+    setInput(merged);
+    growTextarea(inputRef.current);
+  }, [voice.transcript, voice.listening]);
+
+  const startVoice = () => {
+    preVoiceTextRef.current = input.trim() ? `${input.trim()} ` : "";
+    voice.start();
+  };
+
+  // Suppress a real-or-ghost send tap for a short window after recording
+  // ends for any reason (manual stop, silence timeout, network drop) so a
+  // "stop" tap that lands on the newly-swapped Send button never fires.
+  useEffect(() => {
+    const wasListening = wasListeningRef.current;
+    wasListeningRef.current = voice.listening;
+    if (wasListening && !voice.listening) {
+      suppressSubmitRef.current = true;
+      const t = setTimeout(() => { suppressSubmitRef.current = false; }, 500);
+      return () => clearTimeout(t);
+    }
+  }, [voice.listening]);
+
+  const submit = () => {
+    if (suppressSubmitRef.current) return;
+    if (!input.trim() || busy) return;
+    sendMessage({ text: input });
+    setInput("");
+    pinnedRef.current = true;
+    if (inputRef.current) inputRef.current.style.height = "auto";
+    inputRef.current?.focus();
+  };
+
   const composer = (
-    <form
-      onSubmit={(e) => { e.preventDefault(); if (!input.trim() || busy) return; sendMessage({ text: input }); setInput(""); pinnedRef.current = true; inputRef.current?.focus(); }}
-      className="flex items-center gap-2 rounded-full bg-pine-raised border border-cream/25 pl-5 pr-2 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.35)] focus-within:border-cream/40"
-    >
-      <input
-        ref={inputRef}
-        value={input} onChange={(e) => setInput(e.target.value)}
-        placeholder="Ask about hours, tuition, policies…"
-        className="flex-1 bg-transparent text-[16px] text-cream placeholder:text-cream/50 caret-cream outline-none"
-      />
-      {busy ? (
-        <button
-          type="button"
-          onClick={() => stop()}
-          aria-label="Stop"
-          className="size-11 rounded-full bg-cream/15 text-cream flex items-center justify-center touch-manipulation focus-visible:outline-2 focus-visible:outline-cream"
-        >
-          <Stop weight="fill" size={18} />
-        </button>
-      ) : input.trim() ? (
-        <button
-          type="submit"
-          aria-label="Send"
-          className="size-11 rounded-full bg-cream text-pine-deep flex items-center justify-center touch-manipulation focus-visible:outline-2 focus-visible:outline-cream"
-        >
-          <ArrowUp weight="bold" size={18} />
-        </button>
-      ) : (
-        <div aria-hidden className="size-11" />
+    <>
+      <form
+        onSubmit={(e) => { e.preventDefault(); submit(); }}
+        className="flex items-end gap-2 rounded-full bg-pine-raised border border-cream/25 pl-5 pr-2 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.35)] focus-within:border-cream/40"
+      >
+        <div className="relative flex-1 flex items-center min-h-11">
+          <textarea
+            ref={inputRef}
+            rows={1}
+            value={input}
+            onChange={(e) => { setInput(e.target.value); growTextarea(e.target); }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                submit();
+              }
+            }}
+            placeholder="Ask about hours, tuition, policies…"
+            className={`w-full resize-none max-h-[7.5rem] overflow-y-auto bg-transparent text-[16px] text-cream placeholder:text-cream/50 caret-cream outline-none ${voice.listening ? "opacity-0 pointer-events-none" : ""}`}
+          />
+          {voice.listening && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <VoiceWaveform volume={voice.volume} />
+            </div>
+          )}
+        </div>
+        {busy ? (
+          <button
+            type="button"
+            onClick={() => stop()}
+            aria-label="Stop"
+            className="size-11 rounded-full bg-cream/15 text-cream flex items-center justify-center touch-manipulation focus-visible:outline-2 focus-visible:outline-cream"
+          >
+            <Stop weight="fill" size={18} />
+          </button>
+        ) : voice.listening ? (
+          <button
+            type="button"
+            onClick={() => voice.stop()}
+            aria-label="Stop recording"
+            className="size-11 rounded-full bg-cream/15 text-cream flex items-center justify-center touch-manipulation focus-visible:outline-2 focus-visible:outline-cream"
+          >
+            <Stop weight="fill" size={18} />
+          </button>
+        ) : input.trim() ? (
+          <button
+            type="submit"
+            aria-label="Send"
+            className="size-11 rounded-full bg-cream text-pine-deep flex items-center justify-center touch-manipulation focus-visible:outline-2 focus-visible:outline-cream"
+          >
+            <ArrowUp weight="bold" size={18} />
+          </button>
+        ) : voice.supported ? (
+          <button
+            type="button"
+            onClick={startVoice}
+            aria-label="Start voice input"
+            className="size-11 rounded-full text-cream/70 hover:text-cream flex items-center justify-center touch-manipulation focus-visible:outline-2 focus-visible:outline-cream"
+          >
+            <Microphone weight="fill" size={20} />
+          </button>
+        ) : (
+          <div aria-hidden className="size-11" />
+        )}
+      </form>
+      {voice.error && !voice.listening && (
+        <p className="mt-2 text-xs text-cream/70">{voice.error}</p>
       )}
-    </form>
+    </>
   );
 
   return (
