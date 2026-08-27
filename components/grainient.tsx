@@ -1,6 +1,7 @@
 "use client";
-// Experimental: React Bits "Grainient" background (ogl), trimmed to the props
-// this project would actually use. NOT part of the plan yet; evaluation only.
+// React Bits "Grainient" ambient background (ogl WebGL), trimmed to the props
+// this project uses. The pine-tone field behind every view; callers gate it to
+// desktop, and reduced-motion users get the flat deep pine fallback below.
 import { useEffect, useRef } from "react";
 import { Renderer, Program, Mesh, Triangle } from "ogl";
 
