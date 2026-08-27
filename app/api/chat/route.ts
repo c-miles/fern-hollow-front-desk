@@ -35,7 +35,7 @@ export async function POST(req: Request) {
       }),
     },
     stopWhen: isStepCount(3),
-    experimental_transform: smoothStream({ delayInMs: 20, chunking: "word" }),
+    experimental_transform: smoothStream({ delayInMs: 10, chunking: "word" }),
     onEnd: async ({ text, steps }) => {
       const allToolCalls = steps.flatMap((s) => s.toolCalls ?? []);
       const cited = allToolCalls.find((c) => c.toolName === "cite")?.input as { policyIds?: string[] } | undefined;

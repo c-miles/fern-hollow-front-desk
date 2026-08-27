@@ -13,6 +13,7 @@
   --color-ink-soft: #6b6257;
   --color-pine-deep: #16382e; /* shell ground: nav + parent-view field; the first color seen */
   --color-pine: #1f4d3f;
+  --color-pine-raised: #1e453a; /* elevated surfaces over the field, one step up from pine-deep */
   --color-pine-soft: #1f4d3f14; /* 8% tint for status backgrounds */
   --color-cream: #f2f0ea; /* text on pine surfaces only */
   --color-terracotta: #c4614a;

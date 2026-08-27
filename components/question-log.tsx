@@ -16,7 +16,7 @@ export function QuestionLog({ entries, policies }: { entries: LogEntry[]; polici
   const visible = showAll ? entries : entries.slice(0, 6);
   const remaining = entries.length - visible.length;
   return (
-    <div>
+    <div className="md:flex-1 md:min-h-0 md:overflow-y-auto scroll-area">
       <ul className="divide-y divide-line">
         {visible.map((e) => (
           <li key={e.id} className="py-3 space-y-1">
@@ -35,7 +35,7 @@ export function QuestionLog({ entries, policies }: { entries: LogEntry[]; polici
         ))}
       </ul>
       {remaining > 0 && (
-        <button onClick={() => setShowAll(true)} className="mt-3 text-sm font-semibold text-pine underline focus-visible:outline-2 focus-visible:outline-pine">
+        <button onClick={() => setShowAll(true)} className="mt-3 text-sm font-semibold text-pine underline hover:text-pine-deep focus-visible:outline-2 focus-visible:outline-pine">
           Show more ({remaining} older)
         </button>
       )}

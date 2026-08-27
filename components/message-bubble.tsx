@@ -10,8 +10,8 @@ export function MessageBubble({ message, policies }: { message: UIMessage; polic
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div className={
         isUser
-          ? "max-w-[85%] px-4 py-2.5 text-[15px] leading-relaxed bg-pine-soft text-ink rounded-2xl rounded-br-md"
-          : "w-full px-1 text-[15px] leading-relaxed text-ink"
+          ? "max-w-[80%] px-4 py-2.5 text-[16px] leading-7 bg-cream text-ink rounded-2xl rounded-br-md shadow-[0_2px_8px_rgba(0,0,0,0.25)] space-y-3"
+          : "w-full text-[16px] leading-7 text-cream [text-shadow:0_1px_3px_rgba(0,0,0,0.5)] space-y-3"
       }>
         {message.parts.map((part, i) => {
           if (part.type === "text") return <p key={i} className="whitespace-pre-wrap">{part.text}</p>;
@@ -19,14 +19,14 @@ export function MessageBubble({ message, policies }: { message: UIMessage; polic
             const ids = (part.input as { policyIds: string[] }).policyIds;
             if (ids.length === 0) return null;
             return (
-              <p key={i} className="mt-2 text-xs text-ink-soft">
+              <p key={i} className="text-xs text-cream/60">
                 From the Parent Handbook: {ids.map(titleFor).join(", ")}
               </p>
             );
           }
           if (part.type === "tool-escalate" && (part.state === "input-available" || part.state === "output-available")) {
             return (
-              <div key={i} className="mt-2 rounded-lg bg-terracotta-soft border border-terracotta/30 px-3 py-2 text-sm">
+              <div key={i} className="rounded-[10px] bg-paper px-3 py-2 text-sm shadow-[0_1px_2px_rgba(0,0,0,0.12),0_8px_16px_rgba(0,0,0,0.16),0_24px_48px_rgba(0,0,0,0.18)]">
                 <p className="font-semibold text-terracotta">Flagged for the front desk</p>
                 <p className="text-ink-soft text-xs mt-1">
                   A staff member will follow up. If it is urgent, call <a className="underline" href="tel:5550142400">(555) 014-2400</a>.
