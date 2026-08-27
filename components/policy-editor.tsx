@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { X } from "@phosphor-icons/react";
+import { X, Trash } from "@phosphor-icons/react";
 import type { Policy } from "@/lib/types";
 
 export function PolicyEditor({ initial, children }: { initial: Policy[]; children: React.ReactNode }) {
@@ -12,6 +12,7 @@ export function PolicyEditor({ initial, children }: { initial: Policy[]; childre
   const [saveFailed, setSaveFailed] = useState(false);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState({ title: "", body: "" });
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const router = useRouter();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -50,6 +51,7 @@ export function PolicyEditor({ initial, children }: { initial: Policy[]; childre
     setSelectedId(null);
     setAdding(false);
     setDraft({ title: "", body: "" });
+    setConfirmingDelete(false);
   }
 
   function closeEditor() {
@@ -144,18 +146,35 @@ export function PolicyEditor({ initial, children }: { initial: Policy[]; childre
                   onChange={(e) => setPolicies(policies.map((q) => q.id === selectedPolicy.id ? { ...q, body: e.target.value } : q))}
                   className="w-full text-sm p-3 bg-paper border border-line rounded-lg outline-none focus:border-pine"
                 />
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={async () => {
-                      const ok = await save(policies);
-                      if (ok) dismiss();
-                    }}
-                    disabled={saving}
-                    className="px-3.5 py-2 text-sm font-semibold rounded-lg bg-pine text-cream disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-pine">
-                    {saving ? "Saving…" : "Save changes"}
-                  </button>
-                </div>
                 {saveFailed && <p className="text-sm text-bad">Could not save. Please try again.</p>}
+                {!confirmingDelete ? (
+                  <div className="flex items-center justify-between gap-3">
+                    <button onClick={async () => { const ok = await save(policies); if (ok) dismiss(); }} disabled={saving}
+                      className="px-3.5 py-2 text-sm font-semibold rounded-lg bg-pine text-cream disabled:opacity-50 hover:brightness-90 transition focus-visible:outline-2 focus-visible:outline-pine">
+                      {saving ? "Saving…" : "Save changes"}
+                    </button>
+                    <button onClick={() => setConfirmingDelete(true)}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold rounded-lg bg-bad text-cream hover:brightness-90 transition focus-visible:outline-2 focus-visible:outline-bad">
+                      <Trash size={16} />
+                      Delete policy
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-sm text-ink">Delete this policy? This cannot be undone.</p>
+                    <div className="flex gap-2 mt-2">
+                      <button onClick={async () => { const ok = await save(policies.filter((p) => p.id !== selectedId)); if (ok) dismiss(); }}
+                        disabled={saving}
+                        className="px-3.5 py-2 text-sm font-semibold rounded-lg bg-bad text-cream disabled:opacity-50 hover:brightness-90 transition focus-visible:outline-2 focus-visible:outline-bad">
+                        Delete
+                      </button>
+                      <button onClick={() => setConfirmingDelete(false)}
+                        className="px-3.5 py-2 text-sm font-semibold rounded-lg text-ink-soft hover:bg-pine-soft/50 transition focus-visible:outline-2 focus-visible:outline-pine">
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="space-y-2">
@@ -173,7 +192,7 @@ export function PolicyEditor({ initial, children }: { initial: Policy[]; childre
                     if (ok) dismiss();
                   }}
                   disabled={saving}
-                  className="px-3.5 py-2 text-sm font-semibold rounded-lg bg-pine text-cream disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-pine">
+                  className="px-3.5 py-2 text-sm font-semibold rounded-lg bg-pine text-cream disabled:opacity-50 hover:brightness-90 transition focus-visible:outline-2 focus-visible:outline-pine">
                   Add policy
                 </button>
                 {saveFailed && <p className="text-sm text-bad">Could not save. Please try again.</p>}
