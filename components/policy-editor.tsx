@@ -5,25 +5,42 @@ import type { Policy } from "@/lib/types";
 
 export function PolicyEditor({ initial }: { initial: Policy[] }) {
   const [policies, setPolicies] = useState(initial);
+  const [savedPolicies, setSavedPolicies] = useState(initial);
   const [openId, setOpenId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState({ title: "", body: "" });
   const router = useRouter();
 
   async function save(next: Policy[]) {
     setSaving(true);
+    setSaveFailed(false);
     setPolicies(next);
-    await fetch("/api/policies", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(next) });
-    setSaving(false);
-    router.refresh();
+    try {
+      const res = await fetch("/api/policies", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(next) });
+      if (!res.ok) throw new Error("save failed");
+      setSavedPolicies(next);
+      router.refresh();
+    } catch {
+      setSaveFailed(true);
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
     <div className="space-y-2">
+      {saveFailed && <p className="text-sm text-bad">Could not save. Please try again.</p>}
       {policies.map((p) => (
         <div key={p.id} className="bg-surface border border-line rounded-[10px]">
-          <button onClick={() => setOpenId(openId === p.id ? null : p.id)}
+          <button
+            onClick={() => {
+              if (openId !== null) {
+                setPolicies((cur) => cur.map((q) => q.id === openId ? (savedPolicies.find((s) => s.id === q.id) ?? q) : q));
+              }
+              setOpenId(openId === p.id ? null : p.id);
+            }}
             className="w-full text-left px-4 py-3 font-semibold text-[15px] text-ink focus-visible:outline-2 focus-visible:outline-pine">
             {p.title}
           </button>
