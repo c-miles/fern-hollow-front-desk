@@ -1,6 +1,6 @@
 import {
   streamText, convertToModelMessages, toUIMessageStream,
-  createUIMessageStreamResponse, tool, isStepCount, type UIMessage,
+  createUIMessageStreamResponse, tool, isStepCount, smoothStream, type UIMessage,
 } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
@@ -35,6 +35,7 @@ export async function POST(req: Request) {
       }),
     },
     stopWhen: isStepCount(3),
+    experimental_transform: smoothStream({ delayInMs: 20, chunking: "word" }),
     onEnd: async ({ text, steps }) => {
       const allToolCalls = steps.flatMap((s) => s.toolCalls ?? []);
       const cited = allToolCalls.find((c) => c.toolName === "cite")?.input as { policyIds?: string[] } | undefined;

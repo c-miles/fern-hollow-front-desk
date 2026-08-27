@@ -8,18 +8,18 @@ export function MessageBubble({ message, policies }: { message: UIMessage; polic
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-      <div className={`max-w-[80%] px-4 py-2.5 text-[15px] leading-relaxed ${
+      <div className={
         isUser
-          ? "bg-pine text-cream rounded-2xl rounded-br-md"
-          : "bg-surface border border-line text-ink rounded-2xl rounded-bl-md"
-      }`}>
+          ? "max-w-[85%] px-4 py-2.5 text-[15px] leading-relaxed bg-pine-soft text-ink rounded-2xl rounded-br-md"
+          : "w-full px-1 text-[15px] leading-relaxed text-ink"
+      }>
         {message.parts.map((part, i) => {
           if (part.type === "text") return <p key={i} className="whitespace-pre-wrap">{part.text}</p>;
           if (part.type === "tool-cite" && (part.state === "input-available" || part.state === "output-available")) {
             const ids = (part.input as { policyIds: string[] }).policyIds;
             if (ids.length === 0) return null;
             return (
-              <p key={i} className="mt-2 pt-2 border-t border-line text-xs text-ink-soft">
+              <p key={i} className="mt-2 text-xs text-ink-soft">
                 From the Parent Handbook: {ids.map(titleFor).join(", ")}
               </p>
             );
