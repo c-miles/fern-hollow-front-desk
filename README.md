@@ -1,42 +1,55 @@
 # Fern Hollow front desk
 
-Fern Hollow Early Learning is a fictional early-learning center, and this is an AI front desk prototype for it. `/` is a parent chat with an assistant named Wren. `/staff` is a control center with a question log and an editable policy handbook. Live at https://fern-hollow.vercel.app.
+An AI front desk for Fern Hollow Early Learning, a fictional early-learning center. Parents chat with Wren, an assistant that answers only from the center's policy handbook, cites the policies it used, and hands sensitive questions to staff. Staff get a control center with a live question log and an editable handbook.
+
+**Live:** https://fern-hollow.vercel.app · parent chat at `/`, staff control center at `/staff`
 
 ## How it works
 
 - All 12 of the center's policies go into the system prompt, and Wren answers only from them, saying so plainly when a question falls outside them.
 - A reporting `cite` tool, which the model calls at the end of a reply, returns which policy ids grounded the answer, powering the "From the Parent Handbook" chip in the chat and the match column in the staff log.
-- An `escalate` tool flags sensitive questions instead of answering them, powering the terracotta "Flagged for the front desk" card in the chat and the escalated badge in the staff log.
-- Every question, answer, its citations, and its outcome are logged server-side in the stream's `onEnd` callback.
-- Upstash Redis stores both the staff-edited policies and the question log.
+- An `escalate` tool flags sensitive questions (medical, custody, billing disputes, other families' information, credential requests) instead of answering them, powering the "Flagged for the front desk" card in the chat and the escalated badge in the staff log.
+- Every question, answer, its citations, and its outcome are logged server-side when the stream ends, so questions the handbook doesn't cover show up for staff as gaps to fill.
+- Upstash Redis stores the staff-edited policies, the question log, and rate-limit counters.
 
-At 10 policies, retrieval is a system prompt; at 10,000 it becomes a search tool, and the seam is already in `lib/prompt.ts`.
+At a dozen policies, retrieval is a system prompt; at 10,000 it becomes a search tool, and the seam is already in `lib/prompt.ts`.
+
+## Safeguards
+
+- **Injection fencing:** staff-edited policy text is escaped and wrapped in a trust boundary before it enters the prompt, so a policy body cannot break out of its tag or issue instructions.
+- **Escalation over improvisation:** Wren never gives medical, legal, or custody advice, and says it has flagged something only when it actually escalates.
+- **Cost limits:** chat is rate limited per visitor and site-wide, and question length, conversation history, and reply length are capped.
+- **Nightly reset:** a Vercel cron job restores the 12 default policies every night, so demo edits to the handbook don't linger.
 
 ## Design
 
 Palette and type come from the subject: a Pacific Northwest, forest-named center calls for deep pine greens, warm linen, and a serif display face for trust. The parent view is mobile-first because parents live on phones.
 
-## Time spent
-
-About three hours: a short provisioning evening plus a focused build session.
-
-## Included
-
 - Mobile-first layout, with safe-area and keyboard handling
-- Voice input, with a live waveform, that transcribes speech into the composer where supported and hides itself where it is not
-- Injection hardening: staff-edited policy text is escaped and fenced with a trust boundary before it enters the prompt, so a policy body cannot break out of its tag or issue instructions
-- Accessibility: an announce-once status indicator instead of token-by-token screen-reader spam, focus returned to the input after send, reduced motion fallbacks, 4.5:1 contrast, and 44px touch targets
-- Streaming with stop and retry-in-place
-- Honest no-match behavior that becomes a staff to-do
+- Voice input with a live waveform, transcribing speech into the composer where supported and hiding itself where it is not
+- Streaming replies rendered as markdown, with stop and retry-in-place
+- Accessibility: an announce-once status indicator instead of token-by-token screen-reader spam, focus returned to the input after send, reduced-motion fallbacks, 4.5:1 contrast, and 44px touch targets
 - No real personal data anywhere
 
-## Deliberately deferred
+## Stack
 
-- Auth, since both views would sit behind a login in production
-- Rate limiting, since a single-link prototype has no meaningful traffic to throttle
-- An eval harness, which is what the production version gets
-- Moving grounding out of the system prompt into tool results, so the model applies the skepticism it is trained to give retrieved content
-- The native Citations API, which grounds answers at the document level rather than through a reporting tool
-- Document ingestion, since policies are structured records here on purpose
+Next.js 16, React 19, TypeScript, Tailwind CSS 4, the Vercel AI SDK with Claude Sonnet 5, and Upstash Redis, deployed on Vercel.
 
-A single shared store, last-writer-wins saves, and no versioning: all deliberate for a prototype.
+## Running locally
+
+Create `.env.local` with:
+
+```
+ANTHROPIC_API_KEY=
+KV_REST_API_URL=
+KV_REST_API_TOKEN=
+```
+
+Then run `npm install` and `npm run dev`. The handbook seeds itself with the 12 default policies on first load.
+
+## What production would add
+
+- Auth, with parents and staff behind their own logins so escalations reach a known family
+- An eval harness run on every prompt or model change
+- Grounding through tool results or the native Citations API instead of a reporting tool
+- Policy versioning instead of last-writer-wins saves
