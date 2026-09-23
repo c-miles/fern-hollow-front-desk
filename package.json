@@ -12,6 +12,7 @@
     "@ai-sdk/anthropic": "^4.0.42",
     "@ai-sdk/react": "^4.0.82",
     "@phosphor-icons/react": "^2.1.10",
+    "@upstash/ratelimit": "^2.1.0",
     "@upstash/redis": "^1.38.3",
     "ai": "^7.0.79",
     "next": "16.3.3",

@@ -7,6 +7,7 @@ import { MessageBubble } from "./message-bubble";
 import { VoiceWaveform } from "./voice-waveform";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import type { Policy } from "@/lib/types";
+import { LIMIT_MESSAGES, MAX_QUESTION_CHARS } from "@/lib/limits";
 
 // Kept for later use; not currently rendered.
 const CHIPS = [
@@ -33,11 +34,12 @@ export function Chat({ policies }: { policies: Policy[] }) {
   const wasListeningRef = useRef(false);
   const suppressSubmitRef = useRef(false);
   const voice = useSpeechRecognition();
-  const { messages, sendMessage, status, regenerate, stop } = useChat({
+  const { messages, sendMessage, status, error, regenerate, stop } = useChat({
     transport: new DefaultChatTransport({ api: "/api/chat" }),
     throttle: 50,
   });
   const busy = status === "submitted" || status === "streaming";
+  const limitMessage = error && LIMIT_MESSAGES.includes(error.message) ? error.message : null;
 
   useEffect(() => {
     if (pinnedRef.current && logRef.current) {
@@ -49,7 +51,7 @@ export function Chat({ policies }: { policies: Policy[] }) {
   // any text that was already there once (guarded so it never re-prepends).
   useEffect(() => {
     if (!voice.listening) return;
-    const merged = preVoiceTextRef.current + voice.transcript;
+    const merged = (preVoiceTextRef.current + voice.transcript).slice(0, MAX_QUESTION_CHARS);
     setInput(merged);
     growTextarea(inputRef.current);
   }, [voice.transcript, voice.listening]);
@@ -92,6 +94,7 @@ export function Chat({ policies }: { policies: Policy[] }) {
           <textarea
             ref={inputRef}
             rows={1}
+            maxLength={MAX_QUESTION_CHARS}
             value={input}
             autoComplete="off"
             autoCorrect="on"
@@ -195,9 +198,13 @@ export function Chat({ policies }: { policies: Policy[] }) {
                 </div>
               )}
               {status === "error" && (
-                <div className="text-sm text-cream/90">
-                  Sorry, that didn't go through.{" "}
-                  <button onClick={() => regenerate()} className="underline font-semibold text-cream focus-visible:outline-2 focus-visible:outline-cream">Try again</button>
+                <div role="alert" className="text-sm text-cream/90">
+                  {limitMessage ?? (
+                    <>
+                      Sorry, that didn't go through.{" "}
+                      <button onClick={() => regenerate()} className="underline font-semibold text-cream focus-visible:outline-2 focus-visible:outline-cream">Try again</button>
+                    </>
+                  )}
                 </div>
               )}
             </div>
